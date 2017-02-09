@@ -40,6 +40,7 @@ import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 
 public class CentralService {
 
+    private final String authUrl;
     private final String serviceUrl;
     private final String clientId;
     private final String clientKey;
@@ -47,7 +48,8 @@ public class CentralService {
     private Long expire = 0l;
 
     public CentralService(Properties properties) {
-        serviceUrl = properties.getProperty("central.url");
+        authUrl = properties.getProperty("central.auth");
+        serviceUrl = properties.getProperty("central.service");
         clientId = properties.getProperty("central.client-id");
         clientKey = properties.getProperty("central.client-key");
     }
@@ -59,7 +61,7 @@ public class CentralService {
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(clientId, clientKey);
         Client client = ClientBuilder.newClient();
         client.register(feature);
-        WebTarget target = client.target(serviceUrl)
+        WebTarget target = client.target(authUrl)
                 .path("/oauth/token");
         Form form = new Form()
                 .param("grant_type", "client_credentials");
@@ -76,7 +78,7 @@ public class CentralService {
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(clientId, clientKey);
         Client client = ClientBuilder.newClient();
         client.register(feature);
-        WebTarget target = client.target(serviceUrl)
+        WebTarget target = client.target(authUrl)
                 .path("/oauth/token");
         Form form = new Form()
                 .param("grant_type", "password")
@@ -97,7 +99,7 @@ public class CentralService {
         Client client = ClientBuilder.newClient();
         client.register(feature);
         WebTarget target = client.target(serviceUrl)
-                .path(String.format("/central-services/v1/sistemas/%d/perfis/%d/usuarios", idSistema, idPerfil));
+                .path(String.format("/v1/sistemas/%d/perfis/%d/usuarios", idSistema, idPerfil));
         Builder builder = target.request();
         builder.header("Authorization", "Bearer " + getClientToken());
         User[] usuarios = builder.get(User[].class);

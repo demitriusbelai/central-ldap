@@ -27,6 +27,7 @@ package br.unesp.fc.central.ldap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Properties;
 import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -56,6 +57,7 @@ import org.apache.directory.server.core.shared.DefaultCoreSession;
 import org.apache.directory.server.core.shared.DefaultDnFactory;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.directory.server.protocol.shared.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,8 +70,15 @@ public class Main {
         properties.load(new FileInputStream(new File("config.properties")));
 
         LdapServer server = new LdapServer();
-        server.setTransports(new TcpTransport(properties.getProperty("listen.address"),
-                Integer.valueOf(properties.getProperty("listen.port"))));
+        ArrayList<Transport> transports = new ArrayList<>();
+        for (String transport : properties.getProperty("transports").split("\\s+")) {
+            Transport t = new TcpTransport(properties.getProperty(transport.trim() + ".address"),
+                    Integer.valueOf(properties.getProperty(transport.trim() + ".port")));
+            boolean enableSSL = Boolean.valueOf(properties.getProperty(transport + ".enableSSL", "false"));
+            t.setEnableSSL(enableSSL);
+            transports.add(t);
+        }
+        server.setTransports(transports.toArray(new Transport[transports.size()]));
 
         try {
             DirectoryService directoryService = new DefaultDirectoryService();

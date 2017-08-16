@@ -34,6 +34,7 @@ public class User implements Serializable {
     private String cpf;
     private String dataNascimento;
     private Boolean ativo;
+    private Boolean bloqueado;
 
     public Integer getIdUsuario() {
         return idUsuario;
@@ -89,6 +90,14 @@ public class User implements Serializable {
 
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
+    }
+
+    public Boolean getBloqueado() {
+        return bloqueado;
+    }
+
+    public void setBloqueado(Boolean bloqueado) {
+        this.bloqueado = bloqueado;
     }
 
 }

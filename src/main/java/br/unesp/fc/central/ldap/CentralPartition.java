@@ -188,6 +188,7 @@ public class CentralPartition extends AvlPartition {
         entry.put(SchemaConstants.UID_AT, u.getIdentificacao());
         entry.put(SchemaConstants.MAIL_AT, u.getEmail());
         entry.put(SchemaConstants.CN_AT, u.getNome());
+        entry.put(SchemaConstants.DISPLAY_NAME_AT, u.getNome());
         String names[] = u.getNome().split("\\s+");
         entry.put(SchemaConstants.GIVENNAME_AT,
                 String.join(" ", Arrays.copyOfRange(names, 0, names.length - 1)));
@@ -208,6 +209,8 @@ public class CentralPartition extends AvlPartition {
                 && !entry.get(SchemaConstants.CN_AT).getString().equals(u.getNome())) {
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
                     new DefaultAttribute(SchemaConstants.CN_AT, u.getNome())));
+            list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
+                    new DefaultAttribute(SchemaConstants.DISPLAY_NAME_AT, u.getNome())));
             String names[] = u.getNome().split("\\s+");
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
                     new DefaultAttribute(SchemaConstants.GIVENNAME_AT,

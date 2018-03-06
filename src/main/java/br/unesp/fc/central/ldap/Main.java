@@ -80,6 +80,12 @@ public class Main {
         }
         server.setTransports(transports.toArray(new Transport[transports.size()]));
 
+        if (properties.getProperty("server.keystoreFile") != null)
+            server.setKeystoreFile(properties.getProperty("server.keystoreFile"));
+
+        if (properties.getProperty("server.certificatePassword") != null)
+            server.setCertificatePassword(properties.getProperty("server.certificatePassword"));
+
         try {
             DirectoryService directoryService = new DefaultDirectoryService();
             InstanceLayout instanceLayout = new InstanceLayout(Paths.get("instance").toFile());

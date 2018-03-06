@@ -65,7 +65,7 @@ public class CentralService {
                 .path("/oauth/token");
         Form form = new Form()
                 .param("grant_type", "client_credentials");
-        Entity entity = Entity.entity(form,
+        Entity<Form> entity = Entity.entity(form,
                 MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         JSONObject response = target.request()
                 .post(entity, JSONObject.class);
@@ -84,7 +84,7 @@ public class CentralService {
                 .param("grant_type", "password")
                 .param("username", username)
                 .param("password", password);
-        Entity entity = Entity.entity(form,
+        Entity<Form> entity = Entity.entity(form,
                 MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         Response response = target.request()
                 .post(entity);

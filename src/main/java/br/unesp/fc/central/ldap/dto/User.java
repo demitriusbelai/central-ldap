@@ -24,7 +24,9 @@
 package br.unesp.fc.central.ldap.dto;
 
 import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User implements Serializable {
 
     private Integer idUsuario;

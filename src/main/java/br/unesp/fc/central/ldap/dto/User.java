@@ -35,6 +35,8 @@ public class User implements Serializable {
     private String dataNascimento;
     private Boolean ativo;
     private Boolean bloqueado;
+    private String confirmaMigracao;
+    private String emailInstitucional;
 
     public Integer getIdUsuario() {
         return idUsuario;
@@ -98,6 +100,22 @@ public class User implements Serializable {
 
     public void setBloqueado(Boolean bloqueado) {
         this.bloqueado = bloqueado;
+    }
+
+    public String getConfirmaMigracao() {
+        return confirmaMigracao;
+    }
+
+    public void setConfirmaMigracao(String confirmaMigracao) {
+        this.confirmaMigracao = confirmaMigracao;
+    }
+
+    public String getEmailInstitucional() {
+        return emailInstitucional;
+    }
+
+    public void setEmailInstitucional(String emailInstitucional) {
+        this.emailInstitucional = emailInstitucional;
     }
 
 }

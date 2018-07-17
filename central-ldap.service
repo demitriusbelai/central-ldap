@@ -1,0 +1,9 @@
+[Unit]
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/central-ldap
+ExecStart=/usr/bin/java -jar central-ldap.jar
+
+[Install]
+WantedBy=multi-user.target

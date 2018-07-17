@@ -23,15 +23,17 @@
  */
 package br.unesp.fc.central.ldap;
 
-import br.unesp.fc.central.ldap.dto.User;
+import br.unesp.fc.central.ldap.dto.LdapUser;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -67,14 +69,12 @@ public class CentralPartition extends AvlPartition {
 
     private static final Logger log = LoggerFactory.getLogger(CentralPartition.class);
 
-    private CentralService central;
-    private Integer sistema;
-    private Integer perfil;
     private DirectoryService directoryService;
     private CoreSession adminSession;
-    private Long expire = System.currentTimeMillis();
-    private Integer interval = 30 * 60 * 1000; // 30 min
     private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+    private final Map<Integer, String> unidades = new HashMap<>();
+    private final Map<String, LdapUser> mapLdapUser = new HashMap<>();
 
     public CentralPartition(SchemaManager schemaManager, DirectoryService directoryService, CoreSession adminSession) throws LdapException {
         super(schemaManager, directoryService.getDnFactory());
@@ -86,22 +86,25 @@ public class CentralPartition extends AvlPartition {
                 new CoreSessionInvocationHandler(adminSession));
         this.setId("central");
         this.setSuffixDn(dnFactory.create("dc=unesp, dc=br"));
+        unidades.put(1, "feb");
+        unidades.put(2, "fc");
+        unidades.put(3, "faac");
+        unidades.put(37, "bauru");
     }
 
-    public void setCentral(CentralService central) {
-        this.central = central;
+    public Map<Integer, String> getUnidades() {
+        return Collections.unmodifiableMap(unidades);
     }
 
-    public void setSistema(Integer sistema) {
-        this.sistema = sistema;
-    }
-
-    public void setPerfil(Integer perfil) {
-        this.perfil = perfil;
-    }
-
-    public void setInterval(Integer interval) {
-        this.interval = interval * 1000;
+    private void addSubDomain(String subdomain) throws Exception {
+        Entry entry = new DefaultEntry(schemaManager, dnFactory.create("dc=" + subdomain, getSuffixDn().toString()));
+        entry.put(SchemaConstants.OBJECT_CLASS_AT,
+                SchemaConstants.TOP_OC,
+                SchemaConstants.DC_OBJECT_OC);
+        entry.put(SchemaConstants.DC_AT, subdomain);
+        entry.add(SchemaConstants.ENTRY_CSN_AT, directoryService.getCSN().toString());
+        entry.add(SchemaConstants.ENTRY_UUID_AT, UUID.randomUUID().toString());
+        add(new AddOperationContext(adminSession, entry));
     }
 
     @Override
@@ -115,6 +118,9 @@ public class CentralPartition extends AvlPartition {
         domain.add(SchemaConstants.ENTRY_CSN_AT, directoryService.getCSN().toString());
         domain.add(SchemaConstants.ENTRY_UUID_AT, UUID.randomUUID().toString());
         add(new AddOperationContext(adminSession, domain));
+        for (String unidade : unidades.values()) {
+            addSubDomain(unidade);
+        }
     }
 
     @Override
@@ -124,31 +130,21 @@ public class CentralPartition extends AvlPartition {
 
     @Override
     public EntryFilteringCursor search(SearchOperationContext searchContext) throws LdapException {
-        if (System.currentTimeMillis() >= expire) {
-            update();
-        }
         return super.search(searchContext);
     }
 
-    private synchronized void update() {
-        // double-checked locking
-        if (System.currentTimeMillis() < expire) {
-            return;
-        }
-        List<User> users = central.listarUsuariosBySistemaPerfil(sistema, perfil);
-        Set<Dn> setDn = new HashSet<>(users.size());
-        for (User u : users) {
-            if (u.getIdentificacao() == null) {
-                continue;
-            }
+    public synchronized void update(List<LdapUser> users) {
+        Set<Dn> setDn = new HashSet<>();
+        for (LdapUser ldapUser : users) {
+            String dcUnidade = "dc=" + unidades.get(ldapUser.getUnidade());
             try {
-                Dn dn = dnFactory.create(String.format("uid=%s", u.getIdentificacao()), getSuffixDn().toString());
+                Dn dn = dnFactory.create(String.format("uid=%s", ldapUser.getId()), dcUnidade, getSuffixDn().toString());
                 setDn.add(dn);
                 Entry entry = lookup(new LookupOperationContext(adminSession, dn));
                 if (entry != null) {
-                    modifyAttributes(entry, u);
+                    modifyAttributes(entry, ldapUser);
                 } else {
-                    newEntry(dn, u);
+                    newEntry(dn, ldapUser);
                 }
             } catch (Exception ex) {
                 log.error("Error uptating entries", ex);
@@ -175,48 +171,43 @@ public class CentralPartition extends AvlPartition {
         } catch (LdapException | CursorException | IOException ex) {
             log.error("Error uptating entries", ex);
         }
-        expire = System.currentTimeMillis() + interval;
     }
 
-    private void newEntry(Dn dn, User u) throws LdapException {
+    private void newEntry(Dn dn, LdapUser u) throws LdapException {
         Entry entry = new DefaultEntry(getSchemaManager(), dn);
         entry.put(SchemaConstants.OBJECT_CLASS_AT,
                 SchemaConstants.TOP_OC,
                 SchemaConstants.PERSON_OC,
                 SchemaConstants.ORGANIZATIONAL_PERSON_OC,
                 SchemaConstants.INET_ORG_PERSON_OC);
-        entry.put(SchemaConstants.UID_AT, u.getIdentificacao());
+        entry.put(SchemaConstants.UID_AT, u.getId());
         entry.put(SchemaConstants.MAIL_AT, u.getEmail());
-        entry.put(SchemaConstants.CN_AT, u.getNome());
-        entry.put(SchemaConstants.DISPLAY_NAME_AT, u.getNome());
-        String names[] = u.getNome().split("\\s+");
-        entry.put(SchemaConstants.GIVENNAME_AT,
-                String.join(" ", Arrays.copyOfRange(names, 0, names.length - 1)));
-        entry.put(SchemaConstants.SN_AT, names[names.length - 1]);
+        entry.put(SchemaConstants.CN_AT, u.getName());
+        entry.put(SchemaConstants.DISPLAY_NAME_AT, u.getName());
+        entry.put(SchemaConstants.GIVENNAME_AT, u.getGivenName());
+        entry.put(SchemaConstants.SN_AT, u.getSurName());
         entry.add(SchemaConstants.ENTRY_CSN_AT, directoryService.getCSN().toString());
         entry.add(SchemaConstants.ENTRY_UUID_AT, UUID.randomUUID().toString());
         add(new AddOperationContext(adminSession, entry));
     }
 
-    private void modifyAttributes(Entry entry, User u) throws LdapInvalidAttributeValueException, Exception {
+    private void modifyAttributes(Entry entry, LdapUser u) throws LdapInvalidAttributeValueException, Exception {
         List<Modification> list = new ArrayList<>();
         if (entry.get(SchemaConstants.MAIL_AT) != null && u.getEmail() != null
                 && !entry.get(SchemaConstants.MAIL_AT).getString().equals(u.getEmail())) {
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
                     new DefaultAttribute(SchemaConstants.MAIL_AT, u.getEmail())));
         }
-        if (entry.get(SchemaConstants.CN_AT) != null && u.getEmail() != null
-                && !entry.get(SchemaConstants.CN_AT).getString().equals(u.getNome())) {
+        if (entry.get(SchemaConstants.CN_AT) != null && u.getName() != null
+                && !entry.get(SchemaConstants.CN_AT).getString().equals(u.getName())) {
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.CN_AT, u.getNome())));
+                    new DefaultAttribute(SchemaConstants.CN_AT, u.getName())));
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.DISPLAY_NAME_AT, u.getNome())));
-            String names[] = u.getNome().split("\\s+");
+                    new DefaultAttribute(SchemaConstants.DISPLAY_NAME_AT, u.getName())));
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.GIVENNAME_AT,
-                            String.join(" ", Arrays.copyOfRange(names, 0, names.length - 1)))));
+                    new DefaultAttribute(SchemaConstants.GIVENNAME_AT, u.getGivenName())));
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.SN_AT, names[names.length - 1])));
+                    new DefaultAttribute(SchemaConstants.SN_AT, u.getSurName())));
         }
         if (!list.isEmpty()) {
             modify(entry.getDn(), list.toArray(new Modification[list.size()]));

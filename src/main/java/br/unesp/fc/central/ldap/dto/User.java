@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 Demitrius Belai
+ * Copyright (c) 2018 Demitrius Belai
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
  */
 package br.unesp.fc.central.ldap.dto;
 
-import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.io.Serializable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class User implements Serializable {

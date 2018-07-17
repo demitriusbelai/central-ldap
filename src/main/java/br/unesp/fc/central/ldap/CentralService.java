@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2017 Demitrius Belai
+ * Copyright (c) 2018 Demitrius Belai
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ public class CentralService {
                 .path("/oauth/token");
         Form form = new Form()
                 .param("grant_type", "client_credentials");
-        Entity<Form> entity = Entity.entity(form,
+        Entity entity = Entity.entity(form,
                 MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         JSONObject response = target.request()
                 .post(entity, JSONObject.class);
@@ -84,7 +84,7 @@ public class CentralService {
                 .param("grant_type", "password")
                 .param("username", username)
                 .param("password", password);
-        Entity<Form> entity = Entity.entity(form,
+        Entity entity = Entity.entity(form,
                 MediaType.APPLICATION_FORM_URLENCODED_TYPE);
         Response response = target.request()
                 .post(entity);
@@ -94,12 +94,11 @@ public class CentralService {
         return json.getString("access_token");
     }
 
-    public List<User> listarUsuariosBySistemaPerfil(Integer idSistema, Integer idPerfil) {
-        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(clientId, clientKey);
+    public List<User> listarUsuariosPorCpf(String cpf) {
         Client client = ClientBuilder.newClient();
-        client.register(feature);
         WebTarget target = client.target(serviceUrl)
-                .path(String.format("/v1/sistemas/%d/perfis/%d/usuarios", idSistema, idPerfil));
+                .path("/v1/usuarios")
+                .queryParam("cpf", cpf);
         Builder builder = target.request();
         builder.header("Authorization", "Bearer " + getClientToken());
         User[] usuarios = builder.get(User[].class);

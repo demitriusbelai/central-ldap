@@ -1,7 +1,7 @@
-/**
+/*
  * MIT License
  *
- * Copyright (c) 2017 Demitrius Belai
+ * Copyright (c) 2018 Demitrius Belai
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,9 @@ import java.io.FileInputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
@@ -60,16 +63,20 @@ import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 public class Main {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws Exception {
+        System.setProperty("jetty.libsetuid.path", Paths.get("lib", "libsetuid-linux.so").toString());
+
         Properties properties = new Properties();
         properties.load(new FileInputStream(new File("config.properties")));
 
-        LdapServer server = new LdapServer();
+        final LdapServer server = new LdapServer();
         ArrayList<Transport> transports = new ArrayList<>();
         for (String transport : properties.getProperty("transports").split("\\s+")) {
             Transport t = new TcpTransport(properties.getProperty(transport.trim() + ".address"),
@@ -110,6 +117,7 @@ public class Main {
             directoryService.setDnFactory(new DefaultDnFactory(schemaManager, cacheService.getCache("dnCache")));
 
             CentralService central = new CentralService(properties);
+            RhService rh = new RhService(properties);
 
             Dn adminDn = directoryService.getDnFactory().create(ServerDNConstants.ADMIN_SYSTEM_DN);
             CoreSession adminSession = new DefaultCoreSession(
@@ -139,10 +147,6 @@ public class Main {
 
             CentralPartition p = new CentralPartition(schemaManager, directoryService, adminSession);
             p.setSchemaManager(schemaManager);
-            p.setCentral(central);
-            p.setInterval(Integer.valueOf(properties.getProperty("expire.interval")));
-            p.setSistema(Integer.valueOf(properties.getProperty("sistema")));
-            p.setPerfil(Integer.valueOf(properties.getProperty("perfil")));
 
             directoryService.addPartition(p);
 
@@ -160,9 +164,34 @@ public class Main {
 
             directoryService.startup();
 
+            final UpdateTask updateTask = new UpdateTask(p);
+            updateTask.setCentral(central);
+            updateTask.setRh(rh);
+
+            Long updateTime = Long.valueOf(properties.getProperty("thread.interval"));
+
+            final ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
+            scheduledExecutorService.scheduleAtFixedRate(updateTask, 5, updateTime, TimeUnit.SECONDS);
+
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    log.info("Stopping server.");
+                    scheduledExecutorService.shutdownNow();
+                    server.stop();
+                }
+            });
+
+            Signal.handle(new Signal("USR2"), new SignalHandler() {
+                @Override
+                public void handle(Signal sig) {
+                    scheduledExecutorService.execute(updateTask);
+                }
+            });
+
+            log.info("Starting server.");
             server.start();
         } catch (Exception e) {
-            LOG.error("Failed to start the service.", e);
+            log.error("Failed to start the service.", e);
             System.exit(1);
         }
     }

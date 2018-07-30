@@ -35,7 +35,8 @@ public class Funcionario {
 	private String matricula;
 	private String email;
 	private Boolean ativo;
-    private String identificacao;
+    private Integer idLotacao;
+    private Integer idLotacaoOficial;
 
     public Long getIdPessoaFisica() {
         return idPessoaFisica;
@@ -85,12 +86,20 @@ public class Funcionario {
         this.ativo = ativo;
     }
 
-    public String getIdentificacao() {
-        return identificacao;
+    public Integer getIdLotacao() {
+        return idLotacao;
     }
 
-    public void setIdentificacao(String identificacao) {
-        this.identificacao = identificacao;
+    public void setIdLotacao(Integer idLotacao) {
+        this.idLotacao = idLotacao;
+    }
+
+    public Integer getIdLotacaoOficial() {
+        return idLotacaoOficial;
+    }
+
+    public void setIdLotacaoOficial(Integer idLotacaoOficial) {
+        this.idLotacaoOficial = idLotacaoOficial;
     }
 
 }

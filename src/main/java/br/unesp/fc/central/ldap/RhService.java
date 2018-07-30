@@ -25,6 +25,7 @@
 package br.unesp.fc.central.ldap;
 
 import br.unesp.fc.central.ldap.dto.Funcionario;
+import br.unesp.fc.central.ldap.dto.Lotacao;
 import br.unesp.fc.central.ldap.dto.ServidorPublico;
 import java.util.Arrays;
 import java.util.List;
@@ -48,6 +49,14 @@ class RhService {
                 .queryParam("idUnidadeUniversitaria", unidadeUniversitaria)
                 .queryParam("ativo", true);
         Funcionario[] lista = target.request().get(Funcionario[].class);
+        return Arrays.asList(lista);
+    }
+
+    public List<Lotacao> listarLotacao() {
+        Client client = ClientBuilder.newClient();
+        WebTarget target = client.target(rhUrl)
+                .path("/v2/lotacoes");
+        Lotacao[] lista = target.request().get(Lotacao[].class);
         return Arrays.asList(lista);
     }
 

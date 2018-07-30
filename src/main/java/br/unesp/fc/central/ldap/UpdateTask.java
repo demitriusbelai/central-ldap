@@ -26,9 +26,13 @@ package br.unesp.fc.central.ldap;
 
 import br.unesp.fc.central.ldap.dto.Funcionario;
 import br.unesp.fc.central.ldap.dto.LdapUser;
+import br.unesp.fc.central.ldap.dto.Lotacao;
 import br.unesp.fc.central.ldap.dto.User;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,11 +70,15 @@ public class UpdateTask implements Runnable {
 
     private List<LdapUser> getLdapUsers() {
         List ret = new LinkedList();
+        Map<Integer, Lotacao> mapLotacao = montarMap(rh.listarLotacao());
         for (Integer unidade : centralPartition.getUnidades().keySet()) {
             log.info("Getting funcionarios unidade={}", unidade);
             List<Funcionario> funcionarios = rh.listarFuncionarioPorUnidadeUniversitaria(unidade);
-            log.info("Getting funcionarios size={}", funcionarios.size());
             for (Funcionario f : funcionarios) {
+                if (f.getIdLotacao() == null
+                    || mapLotacao.get(f.getIdLotacao()).getIdUnidadeUniversitaria() != unidade) {
+                    continue;
+                }
                 List<User> users = central.listarUsuariosPorCpf(f.getCpf());
                 if (users.isEmpty() || users.get(0).getIdentificacao() == null) {
                     continue;
@@ -85,6 +93,14 @@ public class UpdateTask implements Runnable {
             System.gc();
         }
         return ret;
+    }
+
+    private Map<Integer, Lotacao> montarMap(List<Lotacao> lista) {
+        HashMap map = new HashMap();
+        for (Lotacao l : lista) {
+            map.put(l.getId(), l);
+        }
+        return map;
     }
 
 }

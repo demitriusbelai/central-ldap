@@ -186,7 +186,7 @@ public class CentralPartition extends AvlPartition {
                 SchemaConstants.ORGANIZATIONAL_PERSON_OC,
                 SchemaConstants.INET_ORG_PERSON_OC);
         entry.put(SchemaConstants.UID_AT, u.getIdentificacao());
-        entry.put(SchemaConstants.MAIL_AT, u.getEmail());
+        entry.put(SchemaConstants.MAIL_AT, u.getEmailPrincipal());
         entry.put(SchemaConstants.CN_AT, u.getNome());
         entry.put(SchemaConstants.DISPLAY_NAME_AT, u.getNome());
         String names[] = u.getNome().split("\\s+");
@@ -200,11 +200,11 @@ public class CentralPartition extends AvlPartition {
 
     private void modifyAttributes(Entry entry, User u) throws LdapInvalidAttributeValueException, Exception {
         List<Modification> list = new ArrayList<>();
-        if (entry.get(SchemaConstants.MAIL_AT) != null && u.getEmail() != null
-                && !entry.get(SchemaConstants.MAIL_AT).getString().equals(u.getEmail())) {
+        if (entry.get(SchemaConstants.MAIL_AT) != null && u.getEmailPrincipal() != null
+                && !entry.get(SchemaConstants.MAIL_AT).getString().equals(u.getEmailPrincipal())) {
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
                     new DefaultAttribute(schemaManager.lookupAttributeTypeRegistry(SchemaConstants.MAIL_AT),
-                            u.getEmail())));
+                            u.getEmailPrincipal())));
         }
         if (entry.get(SchemaConstants.CN_AT) != null && u.getNome() != null
                 && !entry.get(SchemaConstants.CN_AT).getString().equals(u.getNome())) {

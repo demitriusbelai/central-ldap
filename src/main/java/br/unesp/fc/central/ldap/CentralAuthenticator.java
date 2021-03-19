@@ -86,7 +86,7 @@ public class CentralAuthenticator extends AbstractAuthenticator {
     }
 
     @Override
-    public LdapPrincipal authenticate(BindOperationContext bindContext) throws Exception {
+    public LdapPrincipal authenticate(BindOperationContext bindContext) throws LdapException {
         log.trace("Authenticating {}", bindContext.getDn());
         byte[] credentials = bindContext.getCredentials();
         Entry user = lookupUser(bindContext);

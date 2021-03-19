@@ -39,7 +39,6 @@ import org.apache.directory.api.ldap.schema.loader.LdifSchemaLoader;
 import org.apache.directory.api.ldap.schema.manager.impl.DefaultSchemaManager;
 import org.apache.directory.server.constants.ServerDNConstants;
 import org.apache.directory.server.core.DefaultDirectoryService;
-import org.apache.directory.server.core.api.CacheService;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.InstanceLayout;
@@ -51,6 +50,7 @@ import org.apache.directory.server.core.authn.AuthenticationInterceptor;
 import org.apache.directory.server.core.authn.Authenticator;
 import org.apache.directory.server.core.authn.SimpleAuthenticator;
 import org.apache.directory.server.core.authn.StrongAuthenticator;
+import org.apache.directory.server.core.partition.impl.btree.AbstractBTreePartition;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.core.shared.DefaultCoreSession;
@@ -90,9 +90,6 @@ public class Main {
             DirectoryService directoryService = new DefaultDirectoryService();
             InstanceLayout instanceLayout = new InstanceLayout(Paths.get("instance").toFile());
             directoryService.setInstanceLayout(instanceLayout);
-            CacheService cacheService = new CacheService();
-            cacheService.initialize(instanceLayout);
-            directoryService.setCacheService(cacheService);
             server.setDirectoryService(directoryService);
 
             File schemaPartitionDirectory = new File(instanceLayout.getPartitionsDirectory(),
@@ -107,7 +104,7 @@ public class Main {
             SchemaManager schemaManager = new DefaultSchemaManager(loader);
             schemaManager.loadAllEnabled();
             directoryService.setSchemaManager(schemaManager);
-            directoryService.setDnFactory(new DefaultDnFactory(schemaManager, cacheService.getCache("dnCache")));
+            directoryService.setDnFactory(new DefaultDnFactory(schemaManager, AbstractBTreePartition.DEFAULT_CACHE_SIZE));
 
             CentralService central = new CentralService(properties);
 

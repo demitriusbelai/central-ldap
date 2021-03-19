@@ -58,6 +58,7 @@ import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.interceptor.context.AddOperationContext;
 import org.apache.directory.server.core.api.interceptor.context.DeleteOperationContext;
 import org.apache.directory.server.core.api.interceptor.context.LookupOperationContext;
+import org.apache.directory.server.core.api.interceptor.context.ModifyOperationContext;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
 import org.apache.directory.server.core.partition.impl.avl.AvlPartition;
 import org.slf4j.Logger;
@@ -105,7 +106,7 @@ public class CentralPartition extends AvlPartition {
     }
 
     @Override
-    protected void doInit() throws Exception {
+    protected void doInit() throws LdapException {
         super.doInit();
         Entry domain = new DefaultEntry(schemaManager, getSuffixDn());
         domain.put(SchemaConstants.OBJECT_CLASS_AT,
@@ -223,7 +224,7 @@ public class CentralPartition extends AvlPartition {
                             names[names.length - 1])));
         }
         if (!list.isEmpty()) {
-            modify(entry.getDn(), list.toArray(new Modification[list.size()]));
+            modify(new ModifyOperationContext(adminSession, entry.getDn(), list));
         }
     }
 

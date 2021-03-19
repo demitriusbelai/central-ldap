@@ -203,20 +203,24 @@ public class CentralPartition extends AvlPartition {
         if (entry.get(SchemaConstants.MAIL_AT) != null && u.getEmail() != null
                 && !entry.get(SchemaConstants.MAIL_AT).getString().equals(u.getEmail())) {
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.MAIL_AT, u.getEmail())));
+                    new DefaultAttribute(schemaManager.lookupAttributeTypeRegistry(SchemaConstants.MAIL_AT),
+                            u.getEmail())));
         }
-        if (entry.get(SchemaConstants.CN_AT) != null && u.getEmail() != null
+        if (entry.get(SchemaConstants.CN_AT) != null && u.getNome() != null
                 && !entry.get(SchemaConstants.CN_AT).getString().equals(u.getNome())) {
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.CN_AT, u.getNome())));
+                    new DefaultAttribute(schemaManager.lookupAttributeTypeRegistry(SchemaConstants.CN_AT),
+                            u.getNome())));
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.DISPLAY_NAME_AT, u.getNome())));
+                    new DefaultAttribute(schemaManager.lookupAttributeTypeRegistry(SchemaConstants.DISPLAY_NAME_AT),
+                            u.getNome())));
             String names[] = u.getNome().split("\\s+");
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.GIVENNAME_AT,
+                    new DefaultAttribute(schemaManager.lookupAttributeTypeRegistry(SchemaConstants.GIVENNAME_AT),
                             String.join(" ", Arrays.copyOfRange(names, 0, names.length - 1)))));
             list.add(new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-                    new DefaultAttribute(SchemaConstants.SN_AT, names[names.length - 1])));
+                    new DefaultAttribute(schemaManager.lookupAttributeTypeRegistry(SchemaConstants.SN_AT),
+                            names[names.length - 1])));
         }
         if (!list.isEmpty()) {
             modify(entry.getDn(), list.toArray(new Modification[list.size()]));

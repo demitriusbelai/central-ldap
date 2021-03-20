@@ -6,10 +6,11 @@
     </encoder>
   </appender>
 
-  <root level="INFO">
+  <root level="ERROR">
     <appender-ref ref="STDOUT" />
   </root>
 
-  <logger name="br.unesp.fc.central.ldap" level="TRACE"/>
+  <logger name="br.unesp.fc.central.ldap" level="INFO"/>
+  <logger name="org.apache.directory.server.ldap.LdapServer" level="INFO"/>
 
 </configuration>

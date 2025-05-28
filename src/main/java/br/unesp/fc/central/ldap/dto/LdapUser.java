@@ -31,6 +31,7 @@ public class LdapUser {
     private String id;
     private String email;
     private String name;
+    private String cpf;
     private String givenName;
     private String surName;
     private Integer unidade;
@@ -68,6 +69,14 @@ public class LdapUser {
 
     public String getSurName() {
         return surName;
+    }
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
 
     public Integer getUnidade() {

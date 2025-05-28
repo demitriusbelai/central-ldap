@@ -74,7 +74,6 @@ public class CentralPartition extends AvlPartition {
     private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     private final Map<Integer, String> unidades = new HashMap<>();
-    private final Map<String, LdapUser> mapLdapUser = new HashMap<>();
 
     public CentralPartition(SchemaManager schemaManager, DirectoryService directoryService, CoreSession adminSession) throws LdapException {
         super(schemaManager, directoryService.getDnFactory());

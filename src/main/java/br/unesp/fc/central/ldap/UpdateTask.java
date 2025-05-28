@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +85,7 @@ public class UpdateTask implements Runnable {
                 LdapUser ldapUser = new LdapUser();
                 ldapUser.setId(users.get(0).getIdentificacao());
                 ldapUser.setName(f.getNome());
-                ldapUser.setEmail(f.getEmail());
+                ldapUser.setEmail(users.get(0).getIdentificacao() + "@unesp.br");
                 ldapUser.setUnidade(unidade);
                 ret.add(ldapUser);
             }

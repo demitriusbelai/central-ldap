@@ -37,6 +37,7 @@ public class Funcionario {
 	private Boolean ativo;
     private Integer idLotacao;
     private Integer idLotacaoOficial;
+    private String tipoFuncionario;
 
     public Long getIdPessoaFisica() {
         return idPessoaFisica;
@@ -100,6 +101,14 @@ public class Funcionario {
 
     public void setIdLotacaoOficial(Integer idLotacaoOficial) {
         this.idLotacaoOficial = idLotacaoOficial;
+    }
+
+    public String getTipoFuncionario() {
+        return tipoFuncionario;
+    }
+
+    public void setTipoFuncionario(String tipoFuncionario) {
+        this.tipoFuncionario = tipoFuncionario;
     }
 
 }
